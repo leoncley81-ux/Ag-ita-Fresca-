@@ -8,16 +8,17 @@ export default function App() {
   const [sales, setSales] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
+  // Productos con emojis
   const products = [
-    { id: 'recarga_19', name: 'Recarga 19L', priceUSD: 0.75 },
-    { id: 'recarga_5', name: 'Recarga 5L', priceUSD: 0.35 },
-    { id: 'recarga_3', name: 'Recarga 3L', priceUSD: 0.25 },
-    { id: 'hielo', name: 'Hielo 5kg', priceUSD: 1.5 },
-    { id: 'botellon_19', name: 'Botellón nuevo 19L', priceUSD: 7.0 },
-    { id: 'botellon_5', name: 'Botellón nuevo 5L', priceUSD: 2.5 },
-    { id: 'botellon_3', name: 'Botellón nuevo 3L', priceUSD: 1.8 },
-    { id: 'botellitas_550', name: 'Botellitas 550ml (20 unid)', priceUSD: 16.0 },
-    { id: 'botellitas_330', name: 'Botellitas 330ml (24 unid)', priceUSD: 13.0 },
+    { id: 'recarga_19', name: 'Recarga 19L', emoji: '🚰', priceUSD: 0.75 },
+    { id: 'recarga_5', name: 'Recarga 5L', emoji: '💧', priceUSD: 0.35 },
+    { id: 'recarga_3', name: 'Recarga 3L', emoji: '💦', priceUSD: 0.25 },
+    { id: 'hielo', name: 'Hielo 5kg', emoji: '🧊', priceUSD: 1.5 },
+    { id: 'botellon_19', name: 'Botellón 19L', emoji: '🛢️', priceUSD: 7.0 },
+    { id: 'botellon_5', name: 'Botellón 5L', emoji: '🫙', priceUSD: 2.5 },
+    { id: 'botellon_3', name: 'Botellón 3L', emoji: '🪧', priceUSD: 1.8 },
+    { id: 'botellitas_550', name: 'Botellitas 550ml', emoji: '🍾', priceUSD: 16.0 },
+    { id: 'botellitas_330', name: 'Botellitas 330ml', emoji: '🥤', priceUSD: 13.0 },
   ];
 
   const paymentMethods = [
@@ -31,6 +32,7 @@ export default function App() {
     'Crédito'
   ];
 
+  // Cargar datos del localStorage
   useEffect(() => {
     const saved = localStorage.getItem('aguita_fresca_data');
     if (saved) {
@@ -40,6 +42,7 @@ export default function App() {
     }
   }, []);
 
+  // Guardar datos al localStorage
   const saveData = (newSales, rate) => {
     localStorage.setItem('aguita_fresca_data', JSON.stringify({
       sales: newSales,
@@ -47,6 +50,7 @@ export default function App() {
     }));
   };
 
+  // Registrar venta
   const handleAddSale = (product, quantity, paymentMethod) => {
     if (!exchangeRate) {
       alert('Por favor ingresa la tasa de cambio primero');
@@ -74,6 +78,7 @@ export default function App() {
     saveData(updatedSales, exchangeRate);
   };
 
+  // Actualizar tasa de cambio
   const handleUpdateRate = () => {
     const rate = parseFloat(exchangeInput);
     if (rate > 0) {
@@ -84,15 +89,18 @@ export default function App() {
     }
   };
 
+  // Obtener ventas del día
   const getTodaySales = () => {
     const today = new Date().toISOString().slice(0, 10);
     return sales.filter(s => s.date === today);
   };
 
+  // Obtener ventas del mes
   const getMonthSales = () => {
     return sales.filter(s => s.date.startsWith(selectedMonth));
   };
 
+  // Calcular totales
   const calculateTotals = (salesList) => {
     const totals = {
       totalBS: 0,
@@ -121,6 +129,7 @@ export default function App() {
     return totals;
   };
 
+  // Exportar a CSV
   const exportToCSV = (data, filename) => {
     const csv = [
       ['Fecha', 'Producto', 'Cantidad', 'Precio USD', 'Precio BS', 'Total BS', 'Método de Pago'],
@@ -201,6 +210,7 @@ export default function App() {
             <SalesForm products={products} paymentMethods={paymentMethods} onAddSale={handleAddSale} exchangeRate={exchangeRate} />
           </div>
         )}
+
         {/* Reporte Diario */}
         {currentPage === 'daily' && (
           <div style={{ display: 'grid', gap: '24px' }}>
@@ -218,6 +228,7 @@ export default function App() {
                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{todaySales.length}</p>
               </div>
             </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
               <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
@@ -237,6 +248,7 @@ export default function App() {
                   )}
                 </div>
               </div>
+
               <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                 <div>
@@ -259,6 +271,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+
             {todaySales.length > 0 && (
               <button
                 onClick={() => exportToCSV(todaySales, `ventas_${new Date().toISOString().slice(0, 10)}.csv`)}
@@ -285,6 +298,7 @@ export default function App() {
             )}
           </div>
         )}
+
         {/* Reporte Mensual */}
         {currentPage === 'monthly' && (
           <div style={{ display: 'grid', gap: '24px' }}>
@@ -297,6 +311,7 @@ export default function App() {
                 style={{ width: '100%', maxWidth: '300px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
               />
             </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total BS</p>
@@ -311,6 +326,7 @@ export default function App() {
                 <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{new Set(monthSales.map(s => s.date)).size}</p>
               </div>
             </div>
+
             <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px', overflowX: 'auto' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Resumen por Producto</h3>
               <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
@@ -340,6 +356,7 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
             {monthSales.length > 0 && (
               <button
                 onClick={() => exportToCSV(monthSales, `ventas_${selectedMonth}.csv`)}
@@ -366,6 +383,7 @@ export default function App() {
             )}
           </div>
         )}
+
         {/* Configuración */}
         {currentPage === 'settings' && (
           <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px', display: 'grid', gap: '24px' }}>
@@ -401,6 +419,7 @@ export default function App() {
                 </button>
               </div>
             </div>
+
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: 0, marginBottom: '12px' }}>Información del Sistema</h3>
               <div style={{ background: '#f3f4f6', padding: '16px', borderRadius: '8px', display: 'grid', gap: '8px', fontSize: '14px' }}>
@@ -410,10 +429,11 @@ export default function App() {
                 <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Última actualización: {new Date().toLocaleString('es-VE')}</p>
               </div>
             </div>
+
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#fef3c7', padding: '16px', borderRadius: '8px' }}>
               <h3 style={{ fontWeight: 'bold', color: '#92400e', marginTop: 0, marginBottom: '8px' }}>⚠️ Importante</h3>
               <p style={{ fontSize: '14px', color: '#92400e', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Asegúrate de hacer backups regularmente descargando los CSV desde los reportes.</p>
-              <p style={{ fontSize: '12px', color: '#b45309', margin: 0 }}>Versión: 1.0.0 | Hecha para Agüita Fresca ✨</p>
+              <p style={{ fontSize: '12px', color: '#b45309', margin: 0 }}>Versión: 1.1.0 | Con botones visuales ✨</p>
             </div>
           </div>
         )}
@@ -422,49 +442,64 @@ export default function App() {
   );
 }
 
+// Componente para el formulario de ventas con BOTONES
 function SalesForm({ products, paymentMethods, onAddSale, exchangeRate }) {
-  const [selectedProductIdx, setSelectedProductIdx] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState('1');
   const [paymentMethod, setPaymentMethod] = useState('BS Efectivo');
 
   const handleSubmit = () => {
-    if (selectedProductIdx === '' || !quantity) {
+    if (!selectedProduct || !quantity) {
       alert('Completa todos los campos');
       return;
     }
-
-    const product = products[parseInt(selectedProductIdx)];
-    onAddSale(product, quantity, paymentMethod);
+    onAddSale(selectedProduct, quantity, paymentMethod);
     setQuantity('1');
-    setSelectedProductIdx('');
+    setSelectedProduct(null);
     alert('✅ Venta registrada!');
   };
 
-  const selectedProduct = selectedProductIdx !== '' ? products[parseInt(selectedProductIdx)] : null;
   const priceInBS = selectedProduct ? (selectedProduct.priceUSD * (exchangeRate || 1)).toFixed(2) : 0;
 
   return (
-    <div style={{ display: 'grid', gap: '16px' }}>
+    <div style={{ display: 'grid', gap: '24px' }}>
+      {/* GRID DE PRODUCTOS CON EMOJIS */}
       <div>
-        <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '8px' }}>Producto</label>
-        <select
-          value={selectedProductIdx}
-          onChange={(e) => setSelectedProductIdx(e.target.value)}
-          style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
-        >
-          <option value="">Selecciona un producto</option>
-          {products.map((p, i) => (
-            <option key={i} value={i}>
-              {p.name} - ${p.priceUSD}
-            </option>
+        <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '12px' }}>Selecciona un producto</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
+          {products.map((product) => (
+            <button
+              key={product.id}
+              onClick={() => setSelectedProduct(product)}
+              style={{
+                padding: '16px 12px',
+                border: selectedProduct?.id === product.id ? '3px solid #2563eb' : '2px solid #e5e7eb',
+                borderRadius: '8px',
+                background: selectedProduct?.id === product.id ? '#eff6ff' : 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: selectedProduct?.id === product.id ? '0 2px 8px rgba(37, 99, 235, 0.3)' : 'none'
+              }}
+              onMouseOver={(e) => !selectedProduct || selectedProduct.id !== product.id ? e.currentTarget.style.borderColor = '#2563eb' : null}
+              onMouseOut={(e) => !selectedProduct || selectedProduct.id !== product.id ? e.currentTarget.style.borderColor = '#e5e7eb' : null}
+            >
+              <span style={{ fontSize: '32px' }}>{product.emoji}</span>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>{product.name}</span>
+              <span style={{ fontSize: '11px', color: '#6b7280' }}>${product.priceUSD}</span>
+            </button>
           ))}
-        </select>
+        </div>
         {selectedProduct && (
-          <p style={{ fontSize: '12px', color: '#6b7280', margin: '8px 0 0 0' }}>
-            Precio en BS: {priceInBS} BS
+          <p style={{ fontSize: '12px', color: '#6b7280', margin: '12px 0 0 0' }}>
+            ✅ Seleccionado: {selectedProduct.name} - Precio en BS: {priceInBS} BS
           </p>
         )}
       </div>
+
       <div>
         <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '8px' }}>Cantidad</label>
         <input
@@ -475,6 +510,7 @@ function SalesForm({ products, paymentMethods, onAddSale, exchangeRate }) {
           style={{ width: '100%', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
         />
       </div>
+
       <div>
         <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '8px' }}>Método de Pago</label>
         <select
@@ -489,11 +525,12 @@ function SalesForm({ products, paymentMethods, onAddSale, exchangeRate }) {
           ))}
         </select>
       </div>
+
       <button
         onClick={handleSubmit}
         style={{
           width: '100%',
-          padding: '12px',
+          padding: '14px',
           background: '#2563eb',
           color: 'white',
           border: 'none',
