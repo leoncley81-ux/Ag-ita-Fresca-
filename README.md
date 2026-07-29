@@ -1,2 +1,2 @@
-# Ag-ita-Fresca-
+# Aguita-Fresca-
 Sistema de ventas Aguita Fresca
