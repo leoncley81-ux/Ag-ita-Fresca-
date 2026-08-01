@@ -9,6 +9,7 @@ export default function App() {
   const [sales, setSales] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
+  // Productos con emojis
   const products = [
     { id: 'recarga_19', name: 'Recarga 19L', emoji: '🚰', priceUSD: 0.75 },
     { id: 'recarga_5', name: 'Recarga 5L', emoji: '💧', priceUSD: 0.35 },
@@ -24,6 +25,7 @@ export default function App() {
   const paymentMethodsCommon = ['Punto de Venta', 'Efectivo BS', 'Efectivo USD', 'Pago Móvil', 'Crédito'];
   const paymentMethodsOther = ['Zelle', 'Binance', 'Transferencia'];
 
+  // Cargar datos del localStorage
   useEffect(() => {
     const saved = localStorage.getItem('aguita_fresca_data');
     if (saved) {
@@ -33,6 +35,7 @@ export default function App() {
     }
   }, []);
 
+  // Guardar datos al localStorage
   const saveData = (newSales, rate) => {
     localStorage.setItem('aguita_fresca_data', JSON.stringify({
       sales: newSales,
@@ -40,6 +43,7 @@ export default function App() {
     }));
   };
 
+  // Registrar venta
   const handleAddSale = (product, quantity, paymentMethod, type = 'local', promoApplied = false) => {
     if (!exchangeRate) {
       alert('Por favor ingresa la tasa de cambio primero');
@@ -48,6 +52,7 @@ export default function App() {
 
     const today = new Date().toISOString().slice(0, 10);
     const priceInBS = product.priceUSD * exchangeRate;
+
     const newSale = {
       id: Date.now(),
       date: today,
@@ -68,6 +73,7 @@ export default function App() {
     saveData(updatedSales, exchangeRate);
   };
 
+  // Actualizar tasa de cambio
   const handleUpdateRate = () => {
     const rate = parseFloat(exchangeInput);
     if (rate > 0) {
@@ -78,15 +84,18 @@ export default function App() {
     }
   };
 
+  // Obtener ventas del día (local o delivery)
   const getTodaySales = (type) => {
     const today = new Date().toISOString().slice(0, 10);
     return sales.filter(s => s.date === today && s.type === type);
   };
 
+  // Obtener ventas del mes
   const getMonthSales = (type) => {
     return sales.filter(s => s.date.startsWith(selectedMonth) && s.type === type);
   };
 
+  // Calcular totales
   const calculateTotals = (salesList) => {
     const totals = {
       totalBS: 0,
@@ -115,6 +124,7 @@ export default function App() {
     return totals;
   };
 
+  // EXPORTAR A EXCEL
   const exportToExcel = (data, filename) => {
     const excelData = [
       ['AGÜITA FRESCA - REPORTE DE VENTAS', '', '', '', '', '', ''],
@@ -151,7 +161,7 @@ export default function App() {
 
     const headerStyle = {
       font: { bold: true, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '2563EB' } },
+      fill: { fgColor: { rgb: '0F5F7F' } },
       alignment: { horizontal: 'center', vertical: 'center' }
     };
 
@@ -178,41 +188,53 @@ export default function App() {
   const monthTotalsDelivery = calculateTotals(monthSalesDelivery);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(to bottom right, #eff6ff, #e0e7ff)', padding: '16px' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0F5F7F 0%, #1E7FA6 50%, #00BCD4 100%)', padding: '16px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        {/* Header con Logo */}
+        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: '20px 24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <img 
+              src="/Aguita_Fresca_Logo.png" 
+              alt="Agüita Fresca Logo"
+              style={{ height: '60px', width: 'auto', objectFit: 'contain' }}
+              onError={(e) => {
+                // Si no encuentra el logo, muestra un placeholder
+                e.target.style.display = 'none';
+              }}
+            />
             <div>
-              <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0' }}>Agüita Fresca</h1>
-              <p style={{ color: '#6b7280', margin: 0 }}>Sistema de Ventas y Reportes</p>
+              <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#0F5F7F', margin: '0 0 4px 0' }}>Agüita Fresca</h1>
+              <p style={{ color: '#6b7280', margin: 0, fontSize: '13px' }}>Sistema de Ventas y Reportes</p>
             </div>
-            {exchangeRate && (
-              <div style={{ textAlign: 'right', background: '#eff6ff', padding: '16px', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                <p style={{ color: '#6b7280', margin: '0 0 8px 0', fontSize: '14px' }}>Tasa Actual</p>
-                <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>{exchangeRate} BS/USD</p>
-              </div>
-            )}
           </div>
+          {exchangeRate && (
+            <div style={{ textAlign: 'right', background: 'linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 100%)', padding: '16px 20px', borderRadius: '8px', border: '2px solid #00BCD4' }}>
+              <p style={{ color: '#0F5F7F', margin: '0 0 8px 0', fontSize: '12px', fontWeight: 'bold' }}>TASA ACTUAL</p>
+              <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{exchangeRate} BS/USD</p>
+            </div>
+          )}
         </div>
 
+        {/* Navigation */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
           {['sales', 'delivery', 'daily', 'monthly', 'settings'].map(page => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
               style={{
-                padding: '8px 24px',
+                padding: '10px 20px',
                 borderRadius: '8px',
                 fontWeight: 'bold',
                 border: 'none',
                 cursor: 'pointer',
-                background: currentPage === page ? '#2563eb' : 'white',
-                color: currentPage === page ? 'white' : '#374151',
+                background: currentPage === page ? '#00BCD4' : 'white',
+                color: currentPage === page ? 'white' : '#0F5F7F',
                 transition: 'all 0.3s',
-                boxShadow: currentPage === page ? '0 2px 8px rgba(37, 99, 235, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+                boxShadow: currentPage === page ? '0 4px 12px rgba(0, 188, 212, 0.4)' : '0 1px 3px rgba(0,0,0,0.1)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '6px',
+                fontWeight: currentPage === page ? 'bold' : 'normal'
               }}
             >
               {page === 'sales' && '🏪 Local'}
@@ -224,64 +246,69 @@ export default function App() {
           ))}
         </div>
 
+        {/* Registrar Venta - LOCAL */}
         {currentPage === 'sales' && (
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginTop: 0, marginBottom: '24px' }}>🏪 Nueva Venta - Local</h2>
-            <SalesForm
-              products={products}
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '24px' }}>🏪 Nueva Venta - Local</h2>
+            <SalesForm 
+              products={products} 
               paymentMethodsCommon={paymentMethodsCommon}
               paymentMethodsOther={paymentMethodsOther}
-              onAddSale={handleAddSale}
+              onAddSale={handleAddSale} 
               exchangeRate={exchangeRate}
               type="local"
             />
           </div>
         )}
 
+        {/* Registrar Venta - DELIVERY */}
         {currentPage === 'delivery' && (
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginTop: 0, marginBottom: '24px' }}>🚚 Nueva Venta - Delivery</h2>
-            <SalesForm
-              products={products}
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '24px' }}>🚚 Nueva Venta - Delivery</h2>
+            <SalesForm 
+              products={products} 
               paymentMethodsCommon={paymentMethodsCommon}
               paymentMethodsOther={paymentMethodsOther}
-              onAddSale={handleAddSale}
+              onAddSale={handleAddSale} 
               exchangeRate={exchangeRate}
               type="delivery"
             />
           </div>
         )}
 
+        {/* Reporte Diario */}
         {currentPage === 'daily' && (
           <div style={{ display: 'grid', gap: '24px' }}>
+            {/* LOCAL */}
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 16px 0' }}>🏪 Local</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🏪 Local</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total BS</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a', margin: 0 }}>{todayTotalsLocal.totalBS.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #4CAF50' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL BS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#4CAF50', margin: 0 }}>{todayTotalsLocal.totalBS.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total USD</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>{todayTotalsLocal.totalUSD.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{todayTotalsLocal.totalUSD.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Transacciones</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{todaySalesLocal.length}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TRANSACCIONES</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesLocal.length}</p>
                 </div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
+                <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
                   <div>
                     {Object.entries(todayTotalsLocal.byPayment).length === 0 ? (
                       <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>Sin ventas</p>
                     ) : (
                       Object.entries(todayTotalsLocal.byPayment).map(([method, data]) => (
                         <div key={method} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', padding: '12px 0' }}>
-                          <span style={{ color: '#374151' }}>{method}</span>
+                          <span style={{ color: '#374151', fontWeight: '500' }}>{method}</span>
                           <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontWeight: 'bold', margin: '0 0 4px 0' }}>{data.BS.toFixed(2)} BS</p>
+                            <p style={{ fontWeight: 'bold', color: '#0F5F7F', margin: '0 0 4px 0' }}>{data.BS.toFixed(2)} BS</p>
                             <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{data.count} unid</p>
                           </div>
                         </div>
@@ -289,8 +316,9 @@ export default function App() {
                     )}
                   </div>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
+
+                <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
                     {Object.entries(todayTotalsLocal.byProduct).length === 0 ? (
                       <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>Sin ventas</p>
@@ -300,9 +328,9 @@ export default function App() {
                         .slice(0, 5)
                         .map(([product, data]) => (
                           <div key={product} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', padding: '12px 0' }}>
-                            <span style={{ color: '#374151' }}>{product}</span>
+                            <span style={{ color: '#374151', fontWeight: '500' }}>{product}</span>
                             <div style={{ textAlign: 'right' }}>
-                              <p style={{ fontWeight: 'bold', margin: '0 0 4px 0' }}>{data.quantity} unid</p>
+                              <p style={{ fontWeight: 'bold', color: '#0F5F7F', margin: '0 0 4px 0' }}>{data.quantity} unid</p>
                               <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{data.totalBS.toFixed(2)} BS</p>
                             </div>
                           </div>
@@ -311,15 +339,16 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
               {todaySalesLocal.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesLocal, `ventas_local_${new Date().toISOString().slice(0, 10)}.xlsx`)}
                   style={{
                     width: '100%',
-                    background: '#16a34a',
+                    background: '#00BCD4',
                     color: 'white',
                     border: 'none',
-                    padding: '12px',
+                    padding: '14px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     cursor: 'pointer',
@@ -328,44 +357,47 @@ export default function App() {
                     justifyContent: 'center',
                     gap: '8px',
                     transition: 'background 0.3s',
-                    marginTop: '16px'
+                    marginTop: '16px',
+                    fontSize: '16px'
                   }}
-                  onMouseOver={(e) => e.target.style.background = '#15803d'}
-                  onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                  onMouseOver={(e) => e.target.style.background = '#0097A7'}
+                  onMouseOut={(e) => e.target.style.background = '#00BCD4'}
                 >
                   <Download size={20} /> Descargar Excel
                 </button>
               )}
             </div>
 
-            <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '24px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 16px 0' }}>🚚 Delivery</h3>
+            {/* DELIVERY */}
+            <div style={{ borderTop: '3px solid rgba(255,255,255,0.3)', paddingTop: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🚚 Delivery</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total BS</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a', margin: 0 }}>{todayTotalsDelivery.totalBS.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #4CAF50' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL BS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#4CAF50', margin: 0 }}>{todayTotalsDelivery.totalBS.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total USD</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>{todayTotalsDelivery.totalUSD.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{todayTotalsDelivery.totalUSD.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Transacciones</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{todaySalesDelivery.length}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TRANSACCIONES</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesDelivery.length}</p>
                 </div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
+                <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
                   <div>
                     {Object.entries(todayTotalsDelivery.byPayment).length === 0 ? (
                       <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>Sin ventas</p>
                     ) : (
                       Object.entries(todayTotalsDelivery.byPayment).map(([method, data]) => (
                         <div key={method} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', padding: '12px 0' }}>
-                          <span style={{ color: '#374151' }}>{method}</span>
+                          <span style={{ color: '#374151', fontWeight: '500' }}>{method}</span>
                           <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontWeight: 'bold', margin: '0 0 4px 0' }}>{data.BS.toFixed(2)} BS</p>
+                            <p style={{ fontWeight: 'bold', color: '#0F5F7F', margin: '0 0 4px 0' }}>{data.BS.toFixed(2)} BS</p>
                             <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{data.count} unid</p>
                           </div>
                         </div>
@@ -373,8 +405,9 @@ export default function App() {
                     )}
                   </div>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', border: '1px solid #e5e7eb', padding: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
+
+                <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
                     {Object.entries(todayTotalsDelivery.byProduct).length === 0 ? (
                       <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>Sin ventas</p>
@@ -384,9 +417,9 @@ export default function App() {
                         .slice(0, 5)
                         .map(([product, data]) => (
                           <div key={product} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e5e7eb', padding: '12px 0' }}>
-                            <span style={{ color: '#374151' }}>{product}</span>
+                            <span style={{ color: '#374151', fontWeight: '500' }}>{product}</span>
                             <div style={{ textAlign: 'right' }}>
-                              <p style={{ fontWeight: 'bold', margin: '0 0 4px 0' }}>{data.quantity} unid</p>
+                              <p style={{ fontWeight: 'bold', color: '#0F5F7F', margin: '0 0 4px 0' }}>{data.quantity} unid</p>
                               <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{data.totalBS.toFixed(2)} BS</p>
                             </div>
                           </div>
@@ -395,15 +428,16 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
               {todaySalesDelivery.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesDelivery, `ventas_delivery_${new Date().toISOString().slice(0, 10)}.xlsx`)}
                   style={{
                     width: '100%',
-                    background: '#16a34a',
+                    background: '#00BCD4',
                     color: 'white',
                     border: 'none',
-                    padding: '12px',
+                    padding: '14px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     cursor: 'pointer',
@@ -412,10 +446,11 @@ export default function App() {
                     justifyContent: 'center',
                     gap: '8px',
                     transition: 'background 0.3s',
-                    marginTop: '16px'
+                    marginTop: '16px',
+                    fontSize: '16px'
                   }}
-                  onMouseOver={(e) => e.target.style.background = '#15803d'}
-                  onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                  onMouseOver={(e) => e.target.style.background = '#0097A7'}
+                  onMouseOut={(e) => e.target.style.background = '#00BCD4'}
                 >
                   <Download size={20} /> Descargar Excel
                 </button>
@@ -424,63 +459,67 @@ export default function App() {
           </div>
         )}
 
+        {/* Reporte Mensual */}
         {currentPage === 'monthly' && (
           <div style={{ display: 'grid', gap: '24px' }}>
-            <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px' }}>
-              <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '8px' }}>Selecciona el mes</label>
+            <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+              <label style={{ display: 'block', color: '#0F5F7F', fontWeight: 'bold', marginBottom: '8px' }}>Selecciona el mes</label>
               <input
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{ width: '100%', maxWidth: '300px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
+                style={{ width: '100%', maxWidth: '300px', padding: '10px', border: '2px solid #00BCD4', borderRadius: '8px', fontSize: '14px', color: '#0F5F7F' }}
               />
             </div>
 
+            {/* LOCAL */}
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 16px 0' }}>🏪 Local</h3>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🏪 Local</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total BS</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a', margin: 0 }}>{monthTotalsLocal.totalBS.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #4CAF50' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL BS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#4CAF50', margin: 0 }}>{monthTotalsLocal.totalBS.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total USD</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>{monthTotalsLocal.totalUSD.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{monthTotalsLocal.totalUSD.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Días activos</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{new Set(monthSalesLocal.map(s => s.date)).size}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>DÍAS ACTIVOS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{new Set(monthSalesLocal.map(s => s.date)).size}</p>
                 </div>
               </div>
             </div>
 
-            <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '24px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 16px 0' }}>🚚 Delivery</h3>
+            {/* DELIVERY */}
+            <div style={{ borderTop: '3px solid rgba(255,255,255,0.3)', paddingTop: '24px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🚚 Delivery</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total BS</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#16a34a', margin: 0 }}>{monthTotalsDelivery.totalBS.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #4CAF50' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL BS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#4CAF50', margin: 0 }}>{monthTotalsDelivery.totalBS.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Total USD</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>{monthTotalsDelivery.totalUSD.toFixed(2)}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{monthTotalsDelivery.totalUSD.toFixed(2)}</p>
                 </div>
-                <div style={{ background: '#fafafa', borderRadius: '8px', padding: '24px', border: '1px solid #e5e7eb' }}>
-                  <p style={{ color: '#6b7280', fontSize: '14px', margin: '0 0 8px 0' }}>Días activos</p>
-                  <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#4f46e5', margin: 0 }}>{new Set(monthSalesDelivery.map(s => s.date)).size}</p>
+                <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
+                  <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>DÍAS ACTIVOS</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{new Set(monthSalesDelivery.map(s => s.date)).size}</p>
                 </div>
               </div>
             </div>
 
-            <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px', overflowX: 'auto' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Resumen Total por Producto</h3>
+            {/* Tabla combinada */}
+            <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px', overflowX: 'auto' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Resumen Total por Producto</h3>
               <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #d1d5db' }}>
-                    <th style={{ textAlign: 'left', padding: '12px 0' }}>Producto</th>
-                    <th style={{ textAlign: 'center', padding: '12px 0' }}>Local (unid)</th>
-                    <th style={{ textAlign: 'center', padding: '12px 0' }}>Delivery (unid)</th>
-                    <th style={{ textAlign: 'right', padding: '12px 0' }}>Total BS</th>
+                  <tr style={{ borderBottom: '2px solid #00BCD4', background: '#E0F7FA' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 0', color: '#0F5F7F', fontWeight: 'bold' }}>Producto</th>
+                    <th style={{ textAlign: 'center', padding: '12px 0', color: '#0F5F7F', fontWeight: 'bold' }}>Local (unid)</th>
+                    <th style={{ textAlign: 'center', padding: '12px 0', color: '#0F5F7F', fontWeight: 'bold' }}>Delivery (unid)</th>
+                    <th style={{ textAlign: 'right', padding: '12px 0', color: '#0F5F7F', fontWeight: 'bold' }}>Total BS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -492,11 +531,11 @@ export default function App() {
                     Object.keys({ ...monthTotalsLocal.byProduct, ...monthTotalsDelivery.byProduct })
                       .sort()
                       .map((product, idx) => (
-                        <tr key={product} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? 'transparent' : '#f9fafb' }}>
-                          <td style={{ padding: '12px 0' }}>{product}</td>
-                          <td style={{ textAlign: 'center', padding: '12px 0' }}>{monthTotalsLocal.byProduct[product]?.quantity || 0}</td>
-                          <td style={{ textAlign: 'center', padding: '12px 0' }}>{monthTotalsDelivery.byProduct[product]?.quantity || 0}</td>
-                          <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold' }}>
+                        <tr key={product} style={{ borderBottom: '1px solid #e5e7eb', background: idx % 2 === 0 ? 'transparent' : '#F5F5F5' }}>
+                          <td style={{ padding: '12px 0', color: '#374151', fontWeight: '500' }}>{product}</td>
+                          <td style={{ textAlign: 'center', padding: '12px 0', color: '#0F5F7F' }}>{monthTotalsLocal.byProduct[product]?.quantity || 0}</td>
+                          <td style={{ textAlign: 'center', padding: '12px 0', color: '#0F5F7F' }}>{monthTotalsDelivery.byProduct[product]?.quantity || 0}</td>
+                          <td style={{ textAlign: 'right', padding: '12px 0', fontWeight: 'bold', color: '#0F5F7F' }}>
                             {((monthTotalsLocal.byProduct[product]?.totalBS || 0) + (monthTotalsDelivery.byProduct[product]?.totalBS || 0)).toFixed(2)}
                           </td>
                         </tr>
@@ -511,10 +550,10 @@ export default function App() {
                 onClick={() => exportToExcel([...monthSalesLocal, ...monthSalesDelivery], `ventas_completo_${selectedMonth}.xlsx`)}
                 style={{
                   width: '100%',
-                  background: '#16a34a',
+                  background: '#00BCD4',
                   color: 'white',
                   border: 'none',
-                  padding: '12px',
+                  padding: '14px',
                   borderRadius: '8px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
@@ -522,10 +561,11 @@ export default function App() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  transition: 'background 0.3s'
+                  transition: 'background 0.3s',
+                  fontSize: '16px'
                 }}
-                onMouseOver={(e) => e.target.style.background = '#15803d'}
-                onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                onMouseOver={(e) => e.target.style.background = '#0097A7'}
+                onMouseOut={(e) => e.target.style.background = '#00BCD4'}
               >
                 <Download size={20} /> Descargar Excel - Mes Completo
               </button>
@@ -533,10 +573,11 @@ export default function App() {
           </div>
         )}
 
+        {/* Configuración */}
         {currentPage === 'settings' && (
-          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', padding: '24px', display: 'grid', gap: '24px' }}>
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px', display: 'grid', gap: '24px' }}>
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px' }}>Tasa de Cambio</h2>
+              <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Tasa de Cambio</h2>
               <p style={{ color: '#6b7280', marginBottom: '12px' }}>Ingresa la tasa del día (BS por USD)</p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <input
@@ -545,14 +586,14 @@ export default function App() {
                   onChange={(e) => setExchangeInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleUpdateRate()}
                   placeholder="Ej: 550"
-                  style={{ flex: 1, minWidth: '150px', padding: '12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px' }}
+                  style={{ flex: 1, minWidth: '150px', padding: '12px', border: '2px solid #00BCD4', borderRadius: '8px', fontSize: '14px', color: '#0F5F7F' }}
                   step="0.01"
                 />
                 <button
                   onClick={handleUpdateRate}
                   style={{
                     padding: '12px 24px',
-                    background: '#16a34a',
+                    background: '#00BCD4',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
@@ -560,8 +601,8 @@ export default function App() {
                     cursor: 'pointer',
                     transition: 'background 0.3s'
                   }}
-                  onMouseOver={(e) => e.target.style.background = '#15803d'}
-                  onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                  onMouseOver={(e) => e.target.style.background = '#0097A7'}
+                  onMouseOut={(e) => e.target.style.background = '#00BCD4'}
                 >
                   Actualizar
                 </button>
@@ -569,20 +610,20 @@ export default function App() {
             </div>
 
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: 0, marginBottom: '12px' }}>Información del Sistema</h3>
-              <div style={{ background: '#f3f4f6', padding: '16px', borderRadius: '8px', display: 'grid', gap: '8px', fontSize: '14px' }}>
-                <p style={{ margin: 0 }}><span style={{ fontWeight: 'bold' }}>Total de ventas registradas:</span> {sales.length}</p>
-                <p style={{ margin: 0 }}><span style={{ fontWeight: 'bold' }}>Local:</span> {getTodaySales('local').length} ventas hoy</p>
-                <p style={{ margin: 0 }}><span style={{ fontWeight: 'bold' }}>Delivery:</span> {getTodaySales('delivery').length} ventas hoy</p>
-                <p style={{ margin: 0 }}><span style={{ fontWeight: 'bold' }}>Tasa actual:</span> {exchangeRate ? exchangeRate + ' BS/USD' : 'No configurada'}</p>
-                <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Última actualización: {new Date().toLocaleString('es-VE')}</p>
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '12px' }}>Información del Sistema</h3>
+              <div style={{ background: '#E0F7FA', padding: '16px', borderRadius: '8px', display: 'grid', gap: '8px', fontSize: '14px', border: '1px solid #B2EBF2' }}>
+                <p style={{ margin: 0, color: '#0F5F7F' }}><span style={{ fontWeight: 'bold' }}>Total de ventas registradas:</span> {sales.length}</p>
+                <p style={{ margin: 0, color: '#0F5F7F' }}><span style={{ fontWeight: 'bold' }}>Local:</span> {getTodaySales('local').length} ventas hoy</p>
+                <p style={{ margin: 0, color: '#0F5F7F' }}><span style={{ fontWeight: 'bold' }}>Delivery:</span> {getTodaySales('delivery').length} ventas hoy</p>
+                <p style={{ margin: 0, color: '#0F5F7F' }}><span style={{ fontWeight: 'bold' }}>Tasa actual:</span> {exchangeRate ? exchangeRate + ' BS/USD' : 'No configurada'}</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#0F5F7F' }}>Última actualización: {new Date().toLocaleString('es-VE')}</p>
               </div>
             </div>
 
-            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#fef3c7', padding: '16px', borderRadius: '8px' }}>
-              <h3 style={{ fontWeight: 'bold', color: '#92400e', marginTop: 0, marginBottom: '8px' }}>⚠️ Importante</h3>
-              <p style={{ fontSize: '14px', color: '#92400e', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Asegúrate de hacer backups regularmente descargando los Excel desde los reportes.</p>
-              <p style={{ fontSize: '12px', color: '#b45309', margin: 0 }}>Versión: 2.1.0 | Exportación a Excel ✨</p>
+            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#E0F7FA', padding: '16px', borderRadius: '8px', border: '1px solid #B2EBF2' }}>
+              <h3 style={{ fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '8px' }}>✨ Agüita Fresca - Sistema Profesional</h3>
+              <p style={{ fontSize: '14px', color: '#0F5F7F', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Realiza backups descargando los reportes en Excel.</p>
+              <p style={{ fontSize: '12px', color: '#0F5F7F', margin: 0 }}>Versión: 3.0.0 | Con Logo y Colores Corporativos 💧</p>
             </div>
           </div>
         )}
@@ -591,6 +632,7 @@ export default function App() {
   );
 }
 
+// Componente para el formulario de ventas
 function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddSale, exchangeRate, type }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState('1');
@@ -609,7 +651,7 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
 
     const finalPayment = useOtherPayment ? otherPayment : paymentMethod;
     onAddSale(selectedProduct, quantity, finalPayment, type, promoActive);
-
+    
     setQuantity('1');
     setSelectedProduct(null);
     setPromoActive(false);
@@ -617,12 +659,14 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
   };
 
   const isRecharge = (product) => product.id.startsWith('recarga_');
+
   const priceInBS = selectedProduct ? (selectedProduct.priceUSD * (exchangeRate || 1)).toFixed(2) : 0;
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
+      {/* GRID DE PRODUCTOS CON EMOJIS */}
       <div>
-        <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '12px' }}>Selecciona un producto</label>
+        <label style={{ display: 'block', color: '#0F5F7F', fontWeight: 'bold', marginBottom: '12px' }}>Selecciona un producto</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px' }}>
           {products.map((product) => (
             <button
@@ -630,18 +674,18 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
               onClick={() => setSelectedProduct(product)}
               style={{
                 padding: '16px 12px',
-                border: selectedProduct?.id === product.id ? '3px solid #2563eb' : '2px solid #e5e7eb',
+                border: selectedProduct?.id === product.id ? '3px solid #00BCD4' : '2px solid #e5e7eb',
                 borderRadius: '8px',
-                background: selectedProduct?.id === product.id ? '#eff6ff' : 'white',
+                background: selectedProduct?.id === product.id ? '#E0F7FA' : 'white',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: selectedProduct?.id === product.id ? '0 2px 8px rgba(37, 99, 235, 0.3)' : 'none'
+                boxShadow: selectedProduct?.id === product.id ? '0 4px 12px rgba(0, 188, 212, 0.3)' : 'none'
               }}
-              onMouseOver={(e) => !selectedProduct || selectedProduct.id !== product.id ? e.currentTarget.style.borderColor = '#2563eb' : null}
+              onMouseOver={(e) => !selectedProduct || selectedProduct.id !== product.id ? e.currentTarget.style.borderColor = '#00BCD4' : null}
               onMouseOut={(e) => !selectedProduct || selectedProduct.id !== product.id ? e.currentTarget.style.borderColor = '#e5e7eb' : null}
             >
               <span style={{ fontSize: '32px' }}>{product.emoji}</span>
@@ -651,14 +695,15 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
           ))}
         </div>
         {selectedProduct && (
-          <p style={{ fontSize: '12px', color: '#6b7280', margin: '12px 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: '#00BCD4', margin: '12px 0 0 0', fontWeight: 'bold' }}>
             ✅ Seleccionado: {selectedProduct.name} - Precio en BS: {priceInBS} BS
           </p>
         )}
       </div>
 
+      {/* CANTIDAD - BOTONES 1-10 + INPUT */}
       <div>
-        <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '12px' }}>Cantidad</label>
+        <label style={{ display: 'block', color: '#0F5F7F', fontWeight: 'bold', marginBottom: '12px' }}>Cantidad</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(50px, 1fr))', gap: '8px', marginBottom: '12px' }}>
           {quantityButtons.map((btn) => (
             <button
@@ -666,10 +711,10 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
               onClick={() => setQuantity(btn.toString())}
               style={{
                 padding: '10px',
-                border: quantity === btn.toString() ? '2px solid #2563eb' : '1px solid #d1d5db',
+                border: quantity === btn.toString() ? '2px solid #00BCD4' : '1px solid #d1d5db',
                 borderRadius: '6px',
-                background: quantity === btn.toString() ? '#eff6ff' : 'white',
-                color: quantity === btn.toString() ? '#2563eb' : '#374151',
+                background: quantity === btn.toString() ? '#E0F7FA' : 'white',
+                color: quantity === btn.toString() ? '#00BCD4' : '#374151',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -686,32 +731,34 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             min="1"
-            style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+            style={{ width: '100%', padding: '10px', border: '2px solid #00BCD4', borderRadius: '6px', fontSize: '14px', color: '#0F5F7F' }}
           />
         </div>
       </div>
 
+      {/* PROMOCIÓN 2x1 */}
       {selectedProduct && isRecharge(selectedProduct) && (
-        <div style={{ background: '#fef3c7', border: '2px solid #fbbf24', borderRadius: '8px', padding: '16px' }}>
+        <div style={{ background: '#E0F7FA', border: '2px solid #00BCD4', borderRadius: '8px', padding: '16px' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', margin: 0 }}>
             <input
               type="checkbox"
               checked={promoActive}
               onChange={(e) => setPromoActive(e.target.checked)}
-              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: '#00BCD4' }}
             />
-            <span style={{ fontWeight: 'bold', color: '#92400e' }}>🎉 Promoción: 2 Recargas por $1</span>
+            <span style={{ fontWeight: 'bold', color: '#0F5F7F' }}>🎉 Promoción: 2 Recargas por $1</span>
           </label>
           {promoActive && (
-            <p style={{ fontSize: '12px', color: '#92400e', margin: '8px 0 0 0' }}>
+            <p style={{ fontSize: '12px', color: '#0F5F7F', margin: '8px 0 0 0' }}>
               (El cliente selecciona 2 recargas y paga solo $1.00)
             </p>
           )}
         </div>
       )}
 
+      {/* MÉTODOS DE PAGO - BOTONES RÁPIDOS */}
       <div>
-        <label style={{ display: 'block', color: '#374151', fontWeight: 'bold', marginBottom: '12px' }}>Método de Pago</label>
+        <label style={{ display: 'block', color: '#0F5F7F', fontWeight: 'bold', marginBottom: '12px' }}>Método de Pago</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', marginBottom: '12px' }}>
           {paymentMethodsCommon.map((method) => (
             <button
@@ -722,10 +769,10 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
               }}
               style={{
                 padding: '12px',
-                border: !useOtherPayment && paymentMethod === method ? '2px solid #2563eb' : '1px solid #d1d5db',
+                border: !useOtherPayment && paymentMethod === method ? '2px solid #00BCD4' : '1px solid #d1d5db',
                 borderRadius: '6px',
-                background: !useOtherPayment && paymentMethod === method ? '#eff6ff' : 'white',
-                color: !useOtherPayment && paymentMethod === method ? '#2563eb' : '#374151',
+                background: !useOtherPayment && paymentMethod === method ? '#E0F7FA' : 'white',
+                color: !useOtherPayment && paymentMethod === method ? '#00BCD4' : '#374151',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -736,6 +783,8 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             </button>
           ))}
         </div>
+
+        {/* OTROS MÉTODOS - DROPDOWN */}
         <select
           onChange={(e) => {
             if (e.target.value) {
@@ -746,11 +795,12 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
           style={{
             width: '100%',
             padding: '10px',
-            border: useOtherPayment ? '2px solid #2563eb' : '1px solid #d1d5db',
+            border: useOtherPayment ? '2px solid #00BCD4' : '1px solid #d1d5db',
             borderRadius: '6px',
             fontSize: '14px',
-            background: useOtherPayment ? '#eff6ff' : 'white',
-            color: '#374151'
+            background: useOtherPayment ? '#E0F7FA' : 'white',
+            color: '#0F5F7F',
+            cursor: 'pointer'
           }}
         >
           <option value="">Otros métodos de pago</option>
@@ -762,12 +812,13 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
         </select>
       </div>
 
+      {/* BOTÓN REGISTRAR */}
       <button
         onClick={handleSubmit}
         style={{
           width: '100%',
           padding: '14px',
-          background: '#2563eb',
+          background: '#00BCD4',
           color: 'white',
           border: 'none',
           borderRadius: '8px',
@@ -780,8 +831,8 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
           justifyContent: 'center',
           gap: '8px'
         }}
-        onMouseOver={(e) => e.target.style.background = '#1d4ed8'}
-        onMouseOut={(e) => e.target.style.background = '#2563eb'}
+        onMouseOver={(e) => e.target.style.background = '#0097A7'}
+        onMouseOut={(e) => e.target.style.background = '#00BCD4'}
       >
         <Plus size={20} /> Registrar Venta {promoActive && '🎉'}
       </button>
