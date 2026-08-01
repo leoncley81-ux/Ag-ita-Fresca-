@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Download, Truck } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('sales');
@@ -114,15 +115,19 @@ export default function App() {
     return totals;
   };
 
-  const exportToCSV = (data, filename) => {
-    const csv = [
-      ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Precio USD', 'Precio BS', 'Total BS', 'Método de Pago', 'Promo'],
+  const exportToExcel = (data, filename) => {
+    const excelData = [
+      ['AGÜITA FRESCA - REPORTE DE VENTAS', '', '', '', '', '', ''],
+      ['Fecha de generación:', new Date().toLocaleString('es-VE'), '', '', '', '', ''],
+      ['Tasa de cambio:', exchangeRate + ' BS/USD', '', '', '', '', ''],
+      [],
+      ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Precio USD', 'Precio BS (unitario)', 'Total BS', 'Método de Pago', 'Promoción'],
       ...data.map(s => [
         s.date,
         s.type === 'local' ? 'Local' : 'Delivery',
         s.productName,
         s.quantity,
-        s.priceUSD,
+        s.priceUSD.toFixed(2),
         s.priceBS.toFixed(2),
         s.totalBS.toFixed(2),
         s.paymentMethod,
@@ -130,13 +135,36 @@ export default function App() {
       ])
     ];
 
-    const csvContent = csv.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+    ws['!cols'] = [
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 20 },
+      { wch: 10 },
+      { wch: 12 },
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 12 }
+    ];
+
+    const headerStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '2563EB' } },
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+
+    for (let i = 0; i < 9; i++) {
+      const cellRef = XLSX.utils.encode_col(i) + '5';
+      if (!ws[cellRef]) ws[cellRef] = {};
+      ws[cellRef].s = headerStyle;
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+
+    XLSX.writeFile(wb, filename);
   };
 
   const todaySalesLocal = getTodaySales('local');
@@ -283,6 +311,31 @@ export default function App() {
                   </div>
                 </div>
               </div>
+              {todaySalesLocal.length > 0 && (
+                <button
+                  onClick={() => exportToExcel(todaySalesLocal, `ventas_local_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+                  style={{
+                    width: '100%',
+                    background: '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background 0.3s',
+                    marginTop: '16px'
+                  }}
+                  onMouseOver={(e) => e.target.style.background = '#15803d'}
+                  onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                >
+                  <Download size={20} /> Descargar Excel
+                </button>
+              )}
             </div>
 
             <div style={{ borderTop: '2px solid #e5e7eb', paddingTop: '24px' }}>
@@ -342,6 +395,31 @@ export default function App() {
                   </div>
                 </div>
               </div>
+              {todaySalesDelivery.length > 0 && (
+                <button
+                  onClick={() => exportToExcel(todaySalesDelivery, `ventas_delivery_${new Date().toISOString().slice(0, 10)}.xlsx`)}
+                  style={{
+                    width: '100%',
+                    background: '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background 0.3s',
+                    marginTop: '16px'
+                  }}
+                  onMouseOver={(e) => e.target.style.background = '#15803d'}
+                  onMouseOut={(e) => e.target.style.background = '#16a34a'}
+                >
+                  <Download size={20} /> Descargar Excel
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -427,6 +505,31 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
+            {(monthSalesLocal.length > 0 || monthSalesDelivery.length > 0) && (
+              <button
+                onClick={() => exportToExcel([...monthSalesLocal, ...monthSalesDelivery], `ventas_completo_${selectedMonth}.xlsx`)}
+                style={{
+                  width: '100%',
+                  background: '#16a34a',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  transition: 'background 0.3s'
+                }}
+                onMouseOver={(e) => e.target.style.background = '#15803d'}
+                onMouseOut={(e) => e.target.style.background = '#16a34a'}
+              >
+                <Download size={20} /> Descargar Excel - Mes Completo
+              </button>
+            )}
           </div>
         )}
 
@@ -478,8 +581,8 @@ export default function App() {
 
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#fef3c7', padding: '16px', borderRadius: '8px' }}>
               <h3 style={{ fontWeight: 'bold', color: '#92400e', marginTop: 0, marginBottom: '8px' }}>⚠️ Importante</h3>
-              <p style={{ fontSize: '14px', color: '#92400e', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Asegúrate de hacer backups regularmente descargando los CSV desde los reportes.</p>
-              <p style={{ fontSize: '12px', color: '#b45309', margin: 0 }}>Versión: 2.0.0 | Local + Delivery + Promoción 2x1 ✨</p>
+              <p style={{ fontSize: '14px', color: '#92400e', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Asegúrate de hacer backups regularmente descargando los Excel desde los reportes.</p>
+              <p style={{ fontSize: '12px', color: '#b45309', margin: 0 }}>Versión: 2.1.0 | Exportación a Excel ✨</p>
             </div>
           </div>
         )}
@@ -495,7 +598,6 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
   const [otherPayment, setOtherPayment] = useState('');
   const [useOtherPayment, setUseOtherPayment] = useState(false);
   const [promoActive, setPromoActive] = useState(false);
-  const [promoProducts, setPromoProducts] = useState([]);
 
   const quantityButtons = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -511,13 +613,11 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
     setQuantity('1');
     setSelectedProduct(null);
     setPromoActive(false);
-    setPromoProducts([]);
     alert('✅ Venta registrada!');
   };
 
   const isRecharge = (product) => product.id.startsWith('recarga_');
   const priceInBS = selectedProduct ? (selectedProduct.priceUSD * (exchangeRate || 1)).toFixed(2) : 0;
-  const canUsePromo = promoActive && promoProducts.filter(p => isRecharge(p)).length === 2;
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
@@ -579,17 +679,15 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             </button>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <div>
-            <label style={{ display: 'block', color: '#6b7280', fontSize: '12px', marginBottom: '4px' }}>O cantidad personalizada:</label>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              min="1"
-              style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
-            />
-          </div>
+        <div>
+          <label style={{ display: 'block', color: '#6b7280', fontSize: '12px', marginBottom: '4px' }}>O cantidad personalizada:</label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            min="1"
+            style={{ width: '100%', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '14px' }}
+          />
         </div>
       </div>
 
@@ -638,31 +736,30 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             </button>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <select
-            onChange={(e) => {
-              if (e.target.value) {
-                setOtherPayment(e.target.value);
-                setUseOtherPayment(true);
-              }
-            }}
-            style={{
-              padding: '10px',
-              border: useOtherPayment ? '2px solid #2563eb' : '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '14px',
-              background: useOtherPayment ? '#eff6ff' : 'white',
-              color: '#374151'
-            }}
-          >
-            <option value="">Otros métodos</option>
-            {paymentMethodsOther.map((method) => (
-              <option key={method} value={method}>
-                {method}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              setOtherPayment(e.target.value);
+              setUseOtherPayment(true);
+            }
+          }}
+          style={{
+            width: '100%',
+            padding: '10px',
+            border: useOtherPayment ? '2px solid #2563eb' : '1px solid #d1d5db',
+            borderRadius: '6px',
+            fontSize: '14px',
+            background: useOtherPayment ? '#eff6ff' : 'white',
+            color: '#374151'
+          }}
+        >
+          <option value="">Otros métodos de pago</option>
+          {paymentMethodsOther.map((method) => (
+            <option key={method} value={method}>
+              {method}
+            </option>
+          ))}
+        </select>
       </div>
 
       <button
