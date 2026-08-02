@@ -49,10 +49,8 @@ export default function App() {
       alert('Por favor ingresa la tasa de cambio primero');
       return;
     }
-
     const today = new Date().toISOString().slice(0, 10);
     const priceInBS = product.priceUSD * exchangeRate;
-
     const newSale = {
       id: Date.now(),
       date: today,
@@ -67,7 +65,6 @@ export default function App() {
       promoApplied: promoApplied,
       timestamp: new Date().toISOString()
     };
-
     const updatedSales = [...sales, newSale];
     setSales(updatedSales);
     saveData(updatedSales, exchangeRate);
@@ -103,24 +100,20 @@ export default function App() {
       byPayment: {},
       byProduct: {}
     };
-
     salesList.forEach(sale => {
       totals.totalBS += sale.totalBS;
       totals.totalUSD += sale.promoApplied ? 1.0 : (sale.quantity * sale.priceUSD);
-
       if (!totals.byPayment[sale.paymentMethod]) {
         totals.byPayment[sale.paymentMethod] = { BS: 0, count: 0 };
       }
       totals.byPayment[sale.paymentMethod].BS += sale.totalBS;
       totals.byPayment[sale.paymentMethod].count += sale.quantity;
-
       if (!totals.byProduct[sale.productName]) {
         totals.byProduct[sale.productName] = { quantity: 0, totalBS: 0 };
       }
       totals.byProduct[sale.productName].quantity += sale.quantity;
       totals.byProduct[sale.productName].totalBS += sale.totalBS;
     });
-
     return totals;
   };
 
@@ -144,9 +137,7 @@ export default function App() {
         s.promoApplied ? '2x1' : ''
       ])
     ];
-
     const ws = XLSX.utils.aoa_to_sheet(excelData);
-
     ws['!cols'] = [
       { wch: 12 },
       { wch: 12 },
@@ -158,22 +149,18 @@ export default function App() {
       { wch: 18 },
       { wch: 12 }
     ];
-
     const headerStyle = {
       font: { bold: true, color: { rgb: 'FFFFFF' } },
       fill: { fgColor: { rgb: '0F5F7F' } },
       alignment: { horizontal: 'center', vertical: 'center' }
     };
-
     for (let i = 0; i < 9; i++) {
       const cellRef = XLSX.utils.encode_col(i) + '5';
       if (!ws[cellRef]) ws[cellRef] = {};
       ws[cellRef].s = headerStyle;
     }
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
-
     XLSX.writeFile(wb, filename);
   };
 
@@ -181,7 +168,6 @@ export default function App() {
   const todaySalesDelivery = getTodaySales('delivery');
   const monthSalesLocal = getMonthSales('local');
   const monthSalesDelivery = getMonthSales('delivery');
-
   const todayTotalsLocal = calculateTotals(todaySalesLocal);
   const todayTotalsDelivery = calculateTotals(todaySalesDelivery);
   const monthTotalsLocal = calculateTotals(monthSalesLocal);
@@ -198,7 +184,6 @@ export default function App() {
               alt="Agüita Fresca Logo"
               style={{ height: '60px', width: 'auto', objectFit: 'contain' }}
               onError={(e) => {
-                // Si no encuentra el logo, muestra un placeholder
                 e.target.style.display = 'none';
               }}
             />
@@ -296,7 +281,6 @@ export default function App() {
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesLocal.length}</p>
                 </div>
               </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
@@ -316,7 +300,6 @@ export default function App() {
                     )}
                   </div>
                 </div>
-
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
@@ -339,7 +322,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
               {todaySalesLocal.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesLocal, `ventas_local_${new Date().toISOString().slice(0, 10)}.xlsx`)}
@@ -385,7 +367,6 @@ export default function App() {
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesDelivery.length}</p>
                 </div>
               </div>
-
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
@@ -405,7 +386,6 @@ export default function App() {
                     )}
                   </div>
                 </div>
-
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
@@ -428,7 +408,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
               {todaySalesDelivery.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesDelivery, `ventas_delivery_${new Date().toISOString().slice(0, 10)}.xlsx`)}
@@ -471,7 +450,6 @@ export default function App() {
                 style={{ width: '100%', maxWidth: '300px', padding: '10px', border: '2px solid #00BCD4', borderRadius: '8px', fontSize: '14px', color: '#0F5F7F' }}
               />
             </div>
-
             {/* LOCAL */}
             <div>
               <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🏪 Local</h3>
@@ -490,7 +468,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-
             {/* DELIVERY */}
             <div style={{ borderTop: '3px solid rgba(255,255,255,0.3)', paddingTop: '24px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🚚 Delivery</h3>
@@ -509,7 +486,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-
             {/* Tabla combinada */}
             <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px', overflowX: 'auto' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Resumen Total por Producto</h3>
@@ -544,7 +520,6 @@ export default function App() {
                 </tbody>
               </table>
             </div>
-
             {(monthSalesLocal.length > 0 || monthSalesDelivery.length > 0) && (
               <button
                 onClick={() => exportToExcel([...monthSalesLocal, ...monthSalesDelivery], `ventas_completo_${selectedMonth}.xlsx`)}
@@ -608,7 +583,6 @@ export default function App() {
                 </button>
               </div>
             </div>
-
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '12px' }}>Información del Sistema</h3>
               <div style={{ background: '#E0F7FA', padding: '16px', borderRadius: '8px', display: 'grid', gap: '8px', fontSize: '14px', border: '1px solid #B2EBF2' }}>
@@ -619,7 +593,6 @@ export default function App() {
                 <p style={{ margin: 0, fontSize: '12px', color: '#0F5F7F' }}>Última actualización: {new Date().toLocaleString('es-VE')}</p>
               </div>
             </div>
-
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#E0F7FA', padding: '16px', borderRadius: '8px', border: '1px solid #B2EBF2' }}>
               <h3 style={{ fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '8px' }}>✨ Agüita Fresca - Sistema Profesional</h3>
               <p style={{ fontSize: '14px', color: '#0F5F7F', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Realiza backups descargando los reportes en Excel.</p>
@@ -648,7 +621,6 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
       alert('Completa todos los campos');
       return;
     }
-
     const finalPayment = useOtherPayment ? otherPayment : paymentMethod;
     onAddSale(selectedProduct, quantity, finalPayment, type, promoActive);
     
@@ -659,7 +631,6 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
   };
 
   const isRecharge = (product) => product.id.startsWith('recarga_');
-
   const priceInBS = selectedProduct ? (selectedProduct.priceUSD * (exchangeRate || 1)).toFixed(2) : 0;
 
   return (
@@ -783,7 +754,6 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             </button>
           ))}
         </div>
-
         {/* OTROS MÉTODOS - DROPDOWN */}
         <select
           onChange={(e) => {
