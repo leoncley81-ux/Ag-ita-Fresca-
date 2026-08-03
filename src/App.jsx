@@ -260,7 +260,6 @@ export default function App() {
               style={{
                 padding: '10px 20px',
                 borderRadius: '8px',
-                fontWeight: 'bold',
                 border: 'none',
                 cursor: 'pointer',
                 background: currentPage === page ? '#00BCD4' : 'white',
