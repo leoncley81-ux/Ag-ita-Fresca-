@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Download, Truck } from 'lucide-react';
+import { Plus, Download, Truck, AlertCircle, CheckCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 export default function App() {
@@ -9,18 +9,18 @@ export default function App() {
   const [sales, setSales] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
-  // Productos con emojis
-  const products = [
-    { id: 'recarga_19', name: 'Recarga 19L', emoji: '🚰', priceUSD: 0.75 },
-    { id: 'recarga_5', name: 'Recarga 5L', emoji: '💧', priceUSD: 0.35 },
-    { id: 'recarga_3', name: 'Recarga 3L', emoji: '💦', priceUSD: 0.25 },
-    { id: 'hielo', name: 'Hielo 5kg', emoji: '🧊', priceUSD: 1.5 },
-    { id: 'botellon_19', name: 'Botellón 19L', emoji: '🛢️', priceUSD: 7.0 },
-    { id: 'botellon_5', name: 'Botellón 5L', emoji: '🫙', priceUSD: 2.5 },
-    { id: 'botellon_3', name: 'Botellón 3L', emoji: '🪧', priceUSD: 1.8 },
-    { id: 'botellitas_550', name: 'Botellitas 550ml', emoji: '🍾', priceUSD: 16.0 },
-    { id: 'botellitas_330', name: 'Botellitas 330ml', emoji: '🥤', priceUSD: 13.0 },
-  ];
+  // Productos con precios base y rango USD
+  const [products, setProducts] = useState([
+    { id: 'recarga_19', name: 'Recarga 19L', emoji: '🚰', priceBS: 550, minUSD: 0.69, maxUSD: 0.75 },
+    { id: 'recarga_5', name: 'Recarga 5L', emoji: '💧', priceBS: 260, minUSD: 0.69, maxUSD: 0.75 },
+    { id: 'recarga_3', name: 'Recarga 3L', emoji: '💦', priceBS: 137.5, minUSD: 0.69, maxUSD: 0.75 },
+    { id: 'hielo', name: 'Hielo 5kg', emoji: '🧊', priceBS: 825, minUSD: 0.69, maxUSD: 1.5 },
+    { id: 'botellon_19', name: 'Botellón 19L', emoji: '🛢️', priceBS: 3850, minUSD: 5.0, maxUSD: 7.0 },
+    { id: 'botellon_5', name: 'Botellón 5L', emoji: '🫙', priceBS: 1375, minUSD: 1.8, maxUSD: 2.5 },
+    { id: 'botellon_3', name: 'Botellón 3L', emoji: '🪧', priceBS: 990, minUSD: 1.2, maxUSD: 1.8 },
+    { id: 'botellitas_550', name: 'Botellitas 550ml', emoji: '🍾', priceBS: 8800, minUSD: 12.0, maxUSD: 16.0 },
+    { id: 'botellitas_330', name: 'Botellitas 330ml', emoji: '🥤', priceBS: 7150, minUSD: 9.5, maxUSD: 13.0 },
+  ]);
 
   const paymentMethodsCommon = ['Punto de Venta', 'Efectivo BS', 'Efectivo USD', 'Pago Móvil', 'Crédito'];
   const paymentMethodsOther = ['Zelle', 'Binance', 'Transferencia'];
@@ -32,14 +32,18 @@ export default function App() {
       const data = JSON.parse(saved);
       setSales(data.sales || []);
       setExchangeRate(data.exchangeRate);
+      if (data.products) {
+        setProducts(data.products);
+      }
     }
   }, []);
 
   // Guardar datos al localStorage
-  const saveData = (newSales, rate) => {
+  const saveData = (newSales, rate, updatedProducts = products) => {
     localStorage.setItem('aguita_fresca_data', JSON.stringify({
       sales: newSales,
-      exchangeRate: rate
+      exchangeRate: rate,
+      products: updatedProducts
     }));
   };
 
@@ -49,15 +53,18 @@ export default function App() {
       alert('Por favor ingresa la tasa de cambio primero');
       return;
     }
+
     const today = new Date().toISOString().slice(0, 10);
-    const priceInBS = product.priceUSD * exchangeRate;
+    const priceInBS = product.priceBS;
+    const priceInUSD = priceInBS / exchangeRate;
+
     const newSale = {
       id: Date.now(),
       date: today,
       productId: product.id,
       productName: product.name,
       quantity: parseInt(quantity),
-      priceUSD: product.priceUSD,
+      priceUSD: priceInUSD,
       priceBS: priceInBS,
       totalBS: promoApplied ? (1.0 * exchangeRate) : (priceInBS * parseInt(quantity)),
       paymentMethod: paymentMethod,
@@ -65,9 +72,10 @@ export default function App() {
       promoApplied: promoApplied,
       timestamp: new Date().toISOString()
     };
+
     const updatedSales = [...sales, newSale];
     setSales(updatedSales);
-    saveData(updatedSales, exchangeRate);
+    saveData(updatedSales, exchangeRate, products);
   };
 
   // Actualizar tasa de cambio
@@ -75,10 +83,42 @@ export default function App() {
     const rate = parseFloat(exchangeInput);
     if (rate > 0) {
       setExchangeRate(rate);
-      saveData(sales, rate);
+      saveData(sales, rate, products);
       setExchangeInput('');
       alert('Tasa actualizada: ' + rate + ' BS/USD');
     }
+  };
+
+  // Actualizar precio de un producto
+  const handleUpdateProductPrice = (productId, newPrice) => {
+    const updatedProducts = products.map(p => 
+      p.id === productId ? { ...p, priceBS: parseFloat(newPrice) } : p
+    );
+    setProducts(updatedProducts);
+    saveData(sales, exchangeRate, updatedProducts);
+  };
+
+  // Calcular precio en USD
+  const getPriceUSD = (priceBS) => {
+    if (!exchangeRate) return 0;
+    return priceBS / exchangeRate;
+  };
+
+  // Calcular rango en BS
+  const getPriceRange = (minUSD, maxUSD) => {
+    if (!exchangeRate) return { min: 0, max: 0 };
+    return {
+      min: minUSD * exchangeRate,
+      max: maxUSD * exchangeRate
+    };
+  };
+
+  // Determinar si el precio está en rango
+  const getPriceStatus = (priceBS, minUSD, maxUSD) => {
+    const priceUSD = getPriceUSD(priceBS);
+    if (priceUSD < minUSD - 0.001) return 'low';
+    if (priceUSD > maxUSD + 0.001) return 'high';
+    return 'ok';
   };
 
   // Obtener ventas del día (local o delivery)
@@ -100,20 +140,24 @@ export default function App() {
       byPayment: {},
       byProduct: {}
     };
+
     salesList.forEach(sale => {
       totals.totalBS += sale.totalBS;
       totals.totalUSD += sale.promoApplied ? 1.0 : (sale.quantity * sale.priceUSD);
+
       if (!totals.byPayment[sale.paymentMethod]) {
         totals.byPayment[sale.paymentMethod] = { BS: 0, count: 0 };
       }
       totals.byPayment[sale.paymentMethod].BS += sale.totalBS;
       totals.byPayment[sale.paymentMethod].count += sale.quantity;
+
       if (!totals.byProduct[sale.productName]) {
         totals.byProduct[sale.productName] = { quantity: 0, totalBS: 0 };
       }
       totals.byProduct[sale.productName].quantity += sale.quantity;
       totals.byProduct[sale.productName].totalBS += sale.totalBS;
     });
+
     return totals;
   };
 
@@ -137,7 +181,9 @@ export default function App() {
         s.promoApplied ? '2x1' : ''
       ])
     ];
+
     const ws = XLSX.utils.aoa_to_sheet(excelData);
+
     ws['!cols'] = [
       { wch: 12 },
       { wch: 12 },
@@ -149,18 +195,22 @@ export default function App() {
       { wch: 18 },
       { wch: 12 }
     ];
+
     const headerStyle = {
       font: { bold: true, color: { rgb: 'FFFFFF' } },
       fill: { fgColor: { rgb: '0F5F7F' } },
       alignment: { horizontal: 'center', vertical: 'center' }
     };
+
     for (let i = 0; i < 9; i++) {
       const cellRef = XLSX.utils.encode_col(i) + '5';
       if (!ws[cellRef]) ws[cellRef] = {};
       ws[cellRef].s = headerStyle;
     }
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ventas');
+
     XLSX.writeFile(wb, filename);
   };
 
@@ -168,6 +218,7 @@ export default function App() {
   const todaySalesDelivery = getTodaySales('delivery');
   const monthSalesLocal = getMonthSales('local');
   const monthSalesDelivery = getMonthSales('delivery');
+
   const todayTotalsLocal = calculateTotals(todaySalesLocal);
   const todayTotalsDelivery = calculateTotals(todaySalesDelivery);
   const monthTotalsLocal = calculateTotals(monthSalesLocal);
@@ -202,13 +253,14 @@ export default function App() {
 
         {/* Navigation */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-          {['sales', 'delivery', 'daily', 'monthly', 'settings'].map(page => (
+          {['sales', 'delivery', 'prices', 'daily', 'monthly', 'settings'].map(page => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
               style={{
                 padding: '10px 20px',
                 borderRadius: '8px',
+                fontWeight: 'bold',
                 border: 'none',
                 cursor: 'pointer',
                 background: currentPage === page ? '#00BCD4' : 'white',
@@ -223,6 +275,7 @@ export default function App() {
             >
               {page === 'sales' && '🏪 Local'}
               {page === 'delivery' && <><Truck size={16} /> Delivery</>}
+              {page === 'prices' && '📋 Precios'}
               {page === 'daily' && '📊 Diario'}
               {page === 'monthly' && '📈 Mensual'}
               {page === 'settings' && '⚙️ Config'}
@@ -260,6 +313,130 @@ export default function App() {
           </div>
         )}
 
+        {/* GESTOR DE PRECIOS */}
+        {currentPage === 'prices' && (
+          <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '24px' }}>📋 Gestor de Precios</h2>
+            
+            {!exchangeRate && (
+              <div style={{ background: '#FFF3CD', border: '1px solid #FFC107', borderRadius: '8px', padding: '16px', marginBottom: '24px', color: '#856404' }}>
+                ⚠️ Primero debes configurar la tasa de cambio en la pestaña de Configuración
+              </div>
+            )}
+
+            {exchangeRate && (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#E0F7FA', borderBottom: '2px solid #00BCD4' }}>
+                      <th style={{ textAlign: 'left', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Producto</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Precio Actual (BS)</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Equiv. USD</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Rango USD</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Rango BS (Válido)</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Estado</th>
+                      <th style={{ textAlign: 'center', padding: '12px', color: '#0F5F7F', fontWeight: 'bold' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product, idx) => {
+                      const priceUSD = getPriceUSD(product.priceBS);
+                      const range = getPriceRange(product.minUSD, product.maxUSD);
+                      const status = getPriceStatus(product.priceBS, product.minUSD, product.maxUSD);
+                      const minBS = Math.ceil(range.min);
+                      const maxBS = Math.floor(range.max);
+
+                      return (
+                        <tr key={product.id} style={{ borderBottom: '1px solid #E5E7EB', background: idx % 2 === 0 ? 'white' : '#F9FAFB' }}>
+                          <td style={{ padding: '12px', color: '#374151', fontWeight: '500' }}>
+                            <span style={{ fontSize: '20px', marginRight: '8px' }}>{product.emoji}</span>
+                            {product.name}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px' }}>
+                            <input
+                              type="number"
+                              value={product.priceBS}
+                              onChange={(e) => handleUpdateProductPrice(product.id, e.target.value)}
+                              style={{
+                                width: '80px',
+                                padding: '6px',
+                                border: '1px solid #D1D5DB',
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                                fontSize: '12px'
+                              }}
+                              step="0.5"
+                            />
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px', fontWeight: 'bold', color: '#0F5F7F' }}>
+                            ${priceUSD.toFixed(4)}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px', color: '#6B7280' }}>
+                            ${product.minUSD.toFixed(2)} - ${product.maxUSD.toFixed(2)}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px', color: '#6B7280' }}>
+                            {minBS} - {maxBS} BS
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px' }}>
+                            {status === 'ok' && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#4CAF50' }}>
+                                <CheckCircle size={16} /> OK
+                              </div>
+                            )}
+                            {status === 'low' && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#FF9800' }}>
+                                <AlertCircle size={16} /> Bajo
+                              </div>
+                            )}
+                            {status === 'high' && (
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: '#F44336' }}>
+                                <AlertCircle size={16} /> Alto
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center', padding: '12px' }}>
+                            {status !== 'ok' && (
+                              <button
+                                onClick={() => {
+                                  const suggestedPrice = product.minUSD * exchangeRate;
+                                  handleUpdateProductPrice(product.id, suggestedPrice);
+                                  alert(`Precio ajustado a ${suggestedPrice.toFixed(2)} BS`);
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#00BCD4',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                Ajustar
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ background: '#E0F7FA', border: '1px solid #B2EBF2', borderRadius: '8px', padding: '16px', marginTop: '24px', color: '#0F5F7F', fontSize: '13px' }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>📌 Cómo usar este gestor:</p>
+              <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <li>La columna "Equiv. USD" muestra cuántos dólares estás cobrando realmente</li>
+                <li>El "Rango USD" es tu mínimo ($0.69) y máximo ($0.75) de ganancia por producto</li>
+                <li>Si ves 🟡 "Bajo" o 🔴 "Alto", haz click en "Ajustar" para recalcular automáticamente</li>
+                <li>Cada cambio se guarda automáticamente</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Reporte Diario */}
         {currentPage === 'daily' && (
           <div style={{ display: 'grid', gap: '24px' }}>
@@ -273,13 +450,14 @@ export default function App() {
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{todayTotalsLocal.totalUSD.toFixed(2)}</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>${todayTotalsLocal.totalUSD.toFixed(2)}</p>
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TRANSACCIONES</p>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesLocal.length}</p>
                 </div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
@@ -299,6 +477,7 @@ export default function App() {
                     )}
                   </div>
                 </div>
+
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
@@ -321,6 +500,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
               {todaySalesLocal.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesLocal, `ventas_local_${new Date().toISOString().slice(0, 10)}.xlsx`)}
@@ -359,13 +539,14 @@ export default function App() {
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{todayTotalsDelivery.totalUSD.toFixed(2)}</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>${todayTotalsDelivery.totalUSD.toFixed(2)}</p>
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TRANSACCIONES</p>
                   <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#FF9800', margin: 0 }}>{todaySalesDelivery.length}</p>
                 </div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Por Método de Pago</h3>
@@ -385,6 +566,7 @@ export default function App() {
                     )}
                   </div>
                 </div>
+
                 <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Top Productos</h3>
                   <div>
@@ -407,6 +589,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
               {todaySalesDelivery.length > 0 && (
                 <button
                   onClick={() => exportToExcel(todaySalesDelivery, `ventas_delivery_${new Date().toISOString().slice(0, 10)}.xlsx`)}
@@ -449,6 +632,7 @@ export default function App() {
                 style={{ width: '100%', maxWidth: '300px', padding: '10px', border: '2px solid #00BCD4', borderRadius: '8px', fontSize: '14px', color: '#0F5F7F' }}
               />
             </div>
+
             {/* LOCAL */}
             <div>
               <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🏪 Local</h3>
@@ -459,7 +643,7 @@ export default function App() {
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{monthTotalsLocal.totalUSD.toFixed(2)}</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>${monthTotalsLocal.totalUSD.toFixed(2)}</p>
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>DÍAS ACTIVOS</p>
@@ -467,6 +651,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+
             {/* DELIVERY */}
             <div style={{ borderTop: '3px solid rgba(255,255,255,0.3)', paddingTop: '24px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', margin: '0 0 16px 0', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🚚 Delivery</h3>
@@ -477,7 +662,7 @@ export default function App() {
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #00BCD4' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>TOTAL USD</p>
-                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>{monthTotalsDelivery.totalUSD.toFixed(2)}</p>
+                  <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#00BCD4', margin: 0 }}>${monthTotalsDelivery.totalUSD.toFixed(2)}</p>
                 </div>
                 <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', borderLeft: '4px solid #FF9800' }}>
                   <p style={{ color: '#6b7280', fontSize: '12px', fontWeight: 'bold', margin: '0 0 8px 0' }}>DÍAS ACTIVOS</p>
@@ -485,6 +670,7 @@ export default function App() {
                 </div>
               </div>
             </div>
+
             {/* Tabla combinada */}
             <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', padding: '24px', overflowX: 'auto' }}>
               <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '16px' }}>Resumen Total por Producto</h3>
@@ -519,6 +705,7 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
             {(monthSalesLocal.length > 0 || monthSalesDelivery.length > 0) && (
               <button
                 onClick={() => exportToExcel([...monthSalesLocal, ...monthSalesDelivery], `ventas_completo_${selectedMonth}.xlsx`)}
@@ -582,6 +769,7 @@ export default function App() {
                 </button>
               </div>
             </div>
+
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '12px' }}>Información del Sistema</h3>
               <div style={{ background: '#E0F7FA', padding: '16px', borderRadius: '8px', display: 'grid', gap: '8px', fontSize: '14px', border: '1px solid #B2EBF2' }}>
@@ -592,10 +780,11 @@ export default function App() {
                 <p style={{ margin: 0, fontSize: '12px', color: '#0F5F7F' }}>Última actualización: {new Date().toLocaleString('es-VE')}</p>
               </div>
             </div>
+
             <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '24px', background: '#E0F7FA', padding: '16px', borderRadius: '8px', border: '1px solid #B2EBF2' }}>
               <h3 style={{ fontWeight: 'bold', color: '#0F5F7F', marginTop: 0, marginBottom: '8px' }}>✨ Agüita Fresca - Sistema Profesional</h3>
-              <p style={{ fontSize: '14px', color: '#0F5F7F', margin: '0 0 8px 0' }}>Los datos se guardan en tu navegador. Realiza backups descargando los reportes en Excel.</p>
-              <p style={{ fontSize: '12px', color: '#0F5F7F', margin: 0 }}>Versión: 3.0.0 | Con Logo y Colores Corporativos 💧</p>
+              <p style={{ fontSize: '14px', color: '#0F5F7F', margin: '0 0 8px 0' }}>Sistema de ventas con gestor de precios dinámicos para mantener tu margen en dólares.</p>
+              <p style={{ fontSize: '12px', color: '#0F5F7F', margin: 0 }}>Versión: 4.0.0 | Con Gestor de Precios 📋</p>
             </div>
           </div>
         )}
@@ -620,6 +809,7 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
       alert('Completa todos los campos');
       return;
     }
+
     const finalPayment = useOtherPayment ? otherPayment : paymentMethod;
     onAddSale(selectedProduct, quantity, finalPayment, type, promoActive);
     
@@ -630,7 +820,8 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
   };
 
   const isRecharge = (product) => product.id.startsWith('recarga_');
-  const priceInBS = selectedProduct ? (selectedProduct.priceUSD * (exchangeRate || 1)).toFixed(2) : 0;
+
+  const priceInUSD = selectedProduct ? (selectedProduct.priceBS / (exchangeRate || 1)).toFixed(4) : 0;
 
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
@@ -660,13 +851,13 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             >
               <span style={{ fontSize: '32px' }}>{product.emoji}</span>
               <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#1f2937', textAlign: 'center' }}>{product.name}</span>
-              <span style={{ fontSize: '11px', color: '#6b7280' }}>${product.priceUSD}</span>
+              <span style={{ fontSize: '11px', color: '#6b7280' }}>{product.priceBS} BS</span>
             </button>
           ))}
         </div>
         {selectedProduct && (
           <p style={{ fontSize: '12px', color: '#00BCD4', margin: '12px 0 0 0', fontWeight: 'bold' }}>
-            ✅ Seleccionado: {selectedProduct.name} - Precio en BS: {priceInBS} BS
+            ✅ Seleccionado: {selectedProduct.name} - Precio en USD: ${priceInUSD}
           </p>
         )}
       </div>
@@ -753,6 +944,7 @@ function SalesForm({ products, paymentMethodsCommon, paymentMethodsOther, onAddS
             </button>
           ))}
         </div>
+
         {/* OTROS MÉTODOS - DROPDOWN */}
         <select
           onChange={(e) => {
